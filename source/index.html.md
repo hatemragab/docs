@@ -1,17 +1,33 @@
 ---
-title: API Reference
+title: Weellu API Reference
 
-language_tabs: # must be one of https://github.com/rouge-ruby/rouge/wiki/List-of-supported-languages-and-lexers
-  - shell
-  - ruby
-  - python
-  - javascript
+language_tabs:
+  - shell: cURL
+  - javascript: JavaScript
+  - dart: Dart
 
 toc_footers:
-  - <a href='#'>Sign Up for a Developer Key</a>
+  - <a href='https://weellu.com'>Weellu Platform</a>
   - <a href='https://github.com/slatedocs/slate'>Documentation Powered by Slate</a>
 
 includes:
+  - authentication
+  - api_tokens
+  - profile
+  - business
+  - channels
+  - groups
+  - broadcasts
+  - projects
+  - messages
+  - e2e
+  - chat_task_mentions
+  - tasks
+  - calls
+  - social
+  - notifications
+  - services
+  - admin
   - errors
 
 search: true
@@ -20,226 +36,152 @@ code_clipboard: true
 
 meta:
   - name: description
-    content: Documentation for the Kittn API
+    content: Documentation for the Weellu API - Real-time communication platform
 ---
 
 # Introduction
 
-Welcome to the Kittn API! You can use our API to access Kittn API endpoints, which can get information on various cats, kittens, and breeds in our database.
+Welcome to the **Weellu API**! You can use this API to access Weellu platform endpoints for messaging, channels, voice/video calls, social features, and more.
 
-We have language bindings in Shell, Ruby, Python, and JavaScript! You can view code examples in the dark area to the right, and you can switch the programming language of the examples with the tabs in the top right.
+All API endpoints are served from:
 
-This example API documentation page was created with [Slate](https://github.com/slatedocs/slate). Feel free to edit it and use it as a base for your own API's documentation.
+`https://api.weellu.com/api/v1/`
 
-# Authentication
+We provide code examples in **cURL**, **JavaScript**, and **Dart**. You can view them in the dark area to the right, and switch between languages using the tabs above.
 
-> To authorize, use this code:
+## Authentication Overview
 
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-```
+> All authenticated requests require this header:
 
 ```shell
-# With shell, you can just pass the correct header with each request
-curl "api_endpoint_here" \
-  -H "Authorization: meowmeowmeow"
+curl "https://api.weellu.com/api/v1/endpoint" \
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ```javascript
-const kittn = require('kittn');
-
-let api = kittn.authorize('meowmeowmeow');
+fetch('https://api.weellu.com/api/v1/endpoint', {
+  headers: {
+    'Authorization': 'Bearer YOUR_TOKEN'
+  }
+});
 ```
 
-> Make sure to replace `meowmeowmeow` with your API key.
+```dart
+final response = await http.get(
+  Uri.parse('https://api.weellu.com/api/v1/endpoint'),
+  headers: {'Authorization': 'Bearer $token'},
+);
+```
 
-Kittn uses API keys to allow access to the API. You can register a new Kittn API key at our [developer portal](http://example.com/developers).
+Weellu uses **Bearer tokens** for authentication. There are two types of tokens:
 
-Kittn expects for the API key to be included in all API requests to the server in a header that looks like the following:
+Type | How to Obtain | Use Case
+---- | ------------- | --------
+**JWT Token** | `POST /auth/login` | Full access to all user endpoints
+**API Token** | Request via Settings > API | Integration access (requires admin approval)
 
-`Authorization: meowmeowmeow`
+Include your token in all API requests in a header:
+
+`Authorization: Bearer YOUR_TOKEN`
 
 <aside class="notice">
-You must replace <code>meowmeowmeow</code> with your personal API key.
+Replace <code>YOUR_TOKEN</code> with your JWT access token or approved API token.
 </aside>
 
-# Kittens
+## Standard Response Format
 
-## Get All Kittens
-
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-api.kittens.get
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-api.kittens.get()
-```
-
-```shell
-curl "http://example.com/api/kittens" \
-  -H "Authorization: meowmeowmeow"
-```
-
-```javascript
-const kittn = require('kittn');
-
-let api = kittn.authorize('meowmeowmeow');
-let kittens = api.kittens.get();
-```
-
-> The above command returns JSON structured like this:
+> All successful responses follow this structure:
 
 ```json
-[
-  {
-    "id": 1,
-    "name": "Fluffums",
-    "breed": "calico",
-    "fluffiness": 6,
-    "cuteness": 7
+{
+  "code": 2000,
+  "data": { },
+  "msg": null
+}
+```
+
+All API responses are wrapped in a standard envelope:
+
+Field | Type | Description
+----- | ---- | -----------
+code | integer | Status code: `2000` (success), `2100` (verify email sent), `4000` (failed), `5500` (client needs update)
+data | any | The response payload (object, array, string, or null)
+msg | string/null | Optional message
+
+## Pagination
+
+> Paginated responses follow this structure:
+
+```json
+{
+  "code": 2000,
+  "data": {
+    "docs": [ ],
+    "totalDocs": 150,
+    "totalPages": 8,
+    "page": 1,
+    "limit": 20,
+    "hasNextPage": true,
+    "hasPrevPage": false
   },
-  {
-    "id": 2,
-    "name": "Max",
-    "breed": "unknown",
-    "fluffiness": 5,
-    "cuteness": 10
-  }
-]
-```
-
-This endpoint retrieves all kittens.
-
-### HTTP Request
-
-`GET http://example.com/api/kittens`
-
-### Query Parameters
-
-Parameter | Default | Description
---------- | ------- | -----------
-include_cats | false | If set to true, the result will also include cats.
-available | true | If set to false, the result will include kittens that have already been adopted.
-
-<aside class="success">
-Remember — a happy kitten is an authenticated kitten!
-</aside>
-
-## Get a Specific Kitten
-
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-api.kittens.get(2)
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-api.kittens.get(2)
-```
-
-```shell
-curl "http://example.com/api/kittens/2" \
-  -H "Authorization: meowmeowmeow"
-```
-
-```javascript
-const kittn = require('kittn');
-
-let api = kittn.authorize('meowmeowmeow');
-let max = api.kittens.get(2);
-```
-
-> The above command returns JSON structured like this:
-
-```json
-{
-  "id": 2,
-  "name": "Max",
-  "breed": "unknown",
-  "fluffiness": 5,
-  "cuteness": 10
+  "msg": null
 }
 ```
 
-This endpoint retrieves a specific kitten.
+Paginated endpoints accept these query parameters:
 
-<aside class="warning">Inside HTML code blocks like this one, you can't use Markdown, so use <code>&lt;code&gt;</code> blocks to denote code.</aside>
+Parameter | Type | Default | Description
+--------- | ---- | ------- | -----------
+page | integer | 1 | Page number (1-indexed)
+limit | integer | 20 | Results per page (max 100)
+lastId | string | - | MongoDB ID for cursor-based pagination
+pType | string | "page" | Pagination type: `page` or `id`
+createSort | string | "desc" | Sort order: `asc` or `desc`
 
-### HTTP Request
+## Common Field Abbreviations
 
-`GET http://example.com/kittens/<ID>`
+The API uses short field names in responses for bandwidth efficiency:
 
-### URL Parameters
+Abbreviation | Full Name | Context
+------------ | --------- | -------
+rId | Room ID | Messages, room members
+sId | Sender ID | Messages
+uId | User ID | Room members
+pId | Peer ID | Single chats
+cId | Creator ID | Room settings
+mT | Message Type | Messages
+c | Content | Message text
+t | Title | Room title
+img | Image | Thumbnails/avatars
+rT | Room Type | Room classification
+uC | Unread Count | Room members
+sAt | Seen At | Message status
+dAt | Delivered At | Message status
+lId | Local ID | Client-generated message ID
+isD | Is Deleted | Soft delete flag
+isA | Is Archived | Archive flag
+isM | Is Muted | Mute flag
+isPin | Is Pinned | Pin flag
 
-Parameter | Description
---------- | -----------
-ID | The ID of the kitten to retrieve
+## Room Types
 
-## Delete a Specific Kitten
+Type | Code | Description
+---- | ---- | -----------
+Single | `s` | One-on-one direct chat
+Group | `g` | Group chat with multiple members
+Broadcast | `b` | One-to-many broadcast channel
+Project | `p` | Project management channel with tasks
+Channel | `c` | Public channel
+System | `sy` | System notifications
 
-```ruby
-require 'kittn'
+## Platform Values
 
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-api.kittens.delete(2)
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-api.kittens.delete(2)
-```
-
-```shell
-curl "http://example.com/api/kittens/2" \
-  -X DELETE \
-  -H "Authorization: meowmeowmeow"
-```
-
-```javascript
-const kittn = require('kittn');
-
-let api = kittn.authorize('meowmeowmeow');
-let max = api.kittens.delete(2);
-```
-
-> The above command returns JSON structured like this:
-
-```json
-{
-  "id": 2,
-  "deleted" : ":("
-}
-```
-
-This endpoint deletes a specific kitten.
-
-### HTTP Request
-
-`DELETE http://example.com/kittens/<ID>`
-
-### URL Parameters
-
-Parameter | Description
---------- | -----------
-ID | The ID of the kitten to delete
-
+Value | Description
+----- | -----------
+Android | Android mobile app
+Ios | iOS mobile app
+Web | Web browser client
+Linux | Linux desktop client
+Mac | macOS desktop client
+Windows | Windows desktop client
+Other | Other clients
